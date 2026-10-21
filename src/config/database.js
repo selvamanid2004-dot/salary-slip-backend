@@ -28,6 +28,11 @@ const inMemoryStore = {
  * Creates and initializes the MySQL connection pool
  */
 async function initDatabasePool() {
+  const useSsl = process.env.DB_SSL === 'true' || 
+                 (process.env.DB_HOST && (process.env.DB_HOST.includes('tidbcloud.com') || process.env.DB_HOST.includes('aivencloud.com')));
+
+  const sslOption = useSsl ? { minVersion: 'TLSv1.2', rejectUnauthorized: true } : undefined;
+
   const dbConfig = {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '3306', 10),
@@ -37,21 +42,28 @@ async function initDatabasePool() {
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
-    decimalNumbers: true
+    decimalNumbers: true,
+    ...(sslOption ? { ssl: sslOption } : {})
   };
 
   try {
     // Attempt connecting to MySQL server directly first (without database to check if database exists)
-    const tempConnection = await mysql.createConnection({
-      host: dbConfig.host,
-      port: dbConfig.port,
-      user: dbConfig.user,
-      password: dbConfig.password
-    });
+    try {
+      const tempConnection = await mysql.createConnection({
+        host: dbConfig.host,
+        port: dbConfig.port,
+        user: dbConfig.user,
+        password: dbConfig.password,
+        ...(sslOption ? { ssl: sslOption } : {})
+      });
 
-    // Create database if it does not already exist
-    await tempConnection.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
-    await tempConnection.end();
+      // Create database if it does not already exist
+      await tempConnection.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
+      await tempConnection.end();
+    } catch (dbCreateErr) {
+      // If user lacks permission to create db or db already exists, continue to pool connection
+      logger.debug(`[MySQL] Pre-connect database check: ${dbCreateErr.message}`);
+    }
 
     // Now instantiate the main connection pool
     pool = mysql.createPool(dbConfig);
