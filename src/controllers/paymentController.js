@@ -308,67 +308,69 @@ class PaymentController {
         event === 'order.paid' ||
         event === 'payment_link.paid'
       ) {
-        // Razorpay sends payment entity either in payload.payment.entity or payload.payment_link.entity
+        // Razorpay sends payment entity in payload.payment.entity, or payment_link in payload.payment_link.entity
         const payment = req.body.payload?.payment?.entity;
         const paymentLink = req.body.payload?.payment_link?.entity;
 
-        if (payment && payment.id) {
-          const notes = payment.notes || (paymentLink && paymentLink.notes) || {};
-          const amountPaid = (payment.amount || 0) / 100;
+        // Payment ID may come from payment entity or payment link
+        const paymentId = payment?.id || paymentLink?.payment_id || `pl_${paymentLink?.id || Date.now()}`;
+        const orderId = payment?.order_id || paymentLink?.order_id || paymentLink?.id || '';
+        const amountPaid = payment?.amount ? (payment.amount / 100) : (paymentLink?.amount_paid ? paymentLink.amount_paid / 100 : 0);
 
-          // Extract customer details from payment or payment link
-          const customerName =
-            notes.clientName ||
-            notes.customer_name ||
-            paymentLink?.customer?.name ||
-            payment.email?.split('@')[0] ||
-            'Valued Customer';
+        const notes = payment?.notes || paymentLink?.notes || {};
 
-          const customerEmail =
-            payment.email ||
-            paymentLink?.customer?.email ||
-            notes.clientEmail ||
-            '';
+        // Extract customer details from payment or payment link
+        const customerName =
+          notes.clientName ||
+          notes.customer_name ||
+          paymentLink?.customer?.name ||
+          payment?.email?.split('@')[0] ||
+          'Valued Customer';
 
-          const customerPhone =
-            payment.contact ||
-            paymentLink?.customer?.contact ||
-            notes.clientPhone ||
-            '';
+        const customerEmail =
+          payment?.email ||
+          paymentLink?.customer?.email ||
+          notes.clientEmail ||
+          '';
 
-          const serviceDescription =
-            paymentLink?.description ||
-            notes.serviceDescription ||
-            `Payment received via Razorpay Payment Link (${payment.id})`;
+        const customerPhone =
+          payment?.contact ||
+          paymentLink?.customer?.contact ||
+          notes.clientPhone ||
+          '';
 
-          const serviceTitle =
-            notes.serviceTitle ||
-            paymentLink?.description ||
-            'IT Professional Services';
+        const serviceDescription =
+          paymentLink?.description ||
+          notes.serviceDescription ||
+          `Payment received via Razorpay Payment Link (${paymentId})`;
 
-          await PaymentController.createInvoiceFromPayment({
-            orderId: payment.order_id || paymentLink?.id || '',
-            paymentId: payment.id,
-            paymentMethod: payment.method ? `Razorpay (${payment.method.toUpperCase()})` : 'Razorpay Payment Link',
-            amountPaid,
-            customerData: {
-              clientName: customerName,
-              clientCompany: notes.clientCompany || notes.company || '',
-              clientEmail: customerEmail,
-              clientPhone: customerPhone,
-              clientAddress: notes.clientAddress || notes.address || '',
-              clientCity: notes.clientCity || notes.city || '',
-              clientPincode: notes.clientPincode || notes.pincode || '',
-              clientGstin: notes.clientGstin || notes.gstin || ''
-            },
-            serviceData: {
-              serviceTitle: serviceTitle,
-              serviceDescription: serviceDescription,
-              sacCode: notes.sacCode || '998314'
-            },
-            billType: notes.billType || 'gst'
-          });
-        }
+        const serviceTitle =
+          notes.serviceTitle ||
+          paymentLink?.description ||
+          'IT Professional Services';
+
+        await PaymentController.createInvoiceFromPayment({
+          orderId,
+          paymentId,
+          paymentMethod: payment?.method ? `Razorpay (${payment.method.toUpperCase()})` : 'Razorpay Payment Link',
+          amountPaid,
+          customerData: {
+            clientName: customerName,
+            clientCompany: notes.clientCompany || notes.company || '',
+            clientEmail: customerEmail,
+            clientPhone: customerPhone,
+            clientAddress: notes.clientAddress || notes.address || '',
+            clientCity: notes.clientCity || notes.city || '',
+            clientPincode: notes.clientPincode || notes.pincode || '',
+            clientGstin: notes.clientGstin || notes.gstin || ''
+          },
+          serviceData: {
+            serviceTitle: serviceTitle,
+            serviceDescription: serviceDescription,
+            sacCode: notes.sacCode || '998314'
+          },
+          billType: notes.billType || 'gst'
+        });
       }
 
       return res.json({ status: 'ok' });
