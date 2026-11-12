@@ -223,6 +223,9 @@ class InvoiceModel {
       notes: data.notes || '',
       terms: data.terms || '',
       converted_from_id: data.converted_from_id || null,
+      payment_id: data.payment_id || null,
+      order_id: data.order_id || null,
+      payment_method: data.payment_method || null,
       created_at: new Date().toISOString()
     };
 
@@ -245,8 +248,9 @@ class InvoiceModel {
         bank_name, bank_account_no, bank_ifsc, bank_branch, bank_account_holder, bank_upi_id,
         items, subtotal, discount_rate, discount_amount, tax_type, gst_rate,
         cgst_amount, sgst_amount, igst_amount, total_tax, grand_total, grand_total_in_words,
-        currency_symbol, notes, terms, converted_from_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        currency_symbol, notes, terms, converted_from_id,
+        payment_id, order_id, payment_method
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
@@ -258,7 +262,8 @@ class InvoiceModel {
       newRecord.bank_name, newRecord.bank_account_no, newRecord.bank_ifsc, newRecord.bank_branch, newRecord.bank_account_holder, newRecord.bank_upi_id,
       JSON.stringify(newRecord.items), newRecord.subtotal, newRecord.discount_rate, newRecord.discount_amount, newRecord.tax_type, newRecord.gst_rate,
       newRecord.cgst_amount, newRecord.sgst_amount, newRecord.igst_amount, newRecord.total_tax, newRecord.grand_total, newRecord.grand_total_in_words,
-      newRecord.currency_symbol, newRecord.notes, newRecord.terms, newRecord.converted_from_id
+      newRecord.currency_symbol, newRecord.notes, newRecord.terms, newRecord.converted_from_id,
+      newRecord.payment_id, newRecord.order_id, newRecord.payment_method
     ];
 
     const result = await query(insertSql, params);
@@ -346,6 +351,30 @@ class InvoiceModel {
 
     await query('UPDATE `invoices` SET status = ? WHERE id = ?', [status, id]);
     return this.getById(id);
+  }
+
+  /**
+   * Finds an invoice by Razorpay payment_id
+   */
+  static async findByPaymentId(paymentId) {
+    if (!paymentId) return null;
+    const isMock = !getDbStatus().isMySQL;
+    if (isMock) {
+      return (inMemoryStore.invoices || []).find(i => i.payment_id === paymentId) || null;
+    }
+    const rows = await query('SELECT * FROM `invoices` WHERE `payment_id` = ? LIMIT 1', [paymentId]);
+    if (rows && rows.length > 0) {
+      const doc = rows[0];
+      if (typeof doc.items === 'string') {
+        try {
+          doc.items = JSON.parse(doc.items);
+        } catch {
+          doc.items = [];
+        }
+      }
+      return doc;
+    }
+    return null;
   }
 
   /**

@@ -25,6 +25,7 @@ const companyRoutes = require('./routes/companyRoutes');
 const employeeRoutes = require('./routes/employeeRoutes');
 const payrollRoutes = require('./routes/payrollRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 const { requireAuth } = require('./middleware/authMiddleware');
 
 const app = express();
@@ -68,6 +69,7 @@ app.use('/api/company', requireAuth, companyRoutes);
 app.use('/api/employees', requireAuth, employeeRoutes);
 app.use('/api/payroll', requireAuth, payrollRoutes);
 app.use('/api/billing', requireAuth, invoiceRoutes);
+app.use('/api/payments', paymentRoutes); // Razorpay order creation, verification & webhooks
 
 // Production Static Serving: Serve compiled React SPA if in production
 const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
