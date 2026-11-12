@@ -302,31 +302,68 @@ class PaymentController {
       const event = req.body.event;
       logger.info(`[PaymentController] Received Razorpay Webhook: ${event}`);
 
-      // Handle payment capture / order paid events
-      if (event === 'payment.captured' || event === 'order.paid') {
+      // Handle payment capture, order paid, or payment link paid events
+      if (
+        event === 'payment.captured' ||
+        event === 'order.paid' ||
+        event === 'payment_link.paid'
+      ) {
+        // Razorpay sends payment entity either in payload.payment.entity or payload.payment_link.entity
         const payment = req.body.payload?.payment?.entity;
+        const paymentLink = req.body.payload?.payment_link?.entity;
+
         if (payment && payment.id) {
-          const notes = payment.notes || {};
+          const notes = payment.notes || (paymentLink && paymentLink.notes) || {};
           const amountPaid = (payment.amount || 0) / 100;
 
+          // Extract customer details from payment or payment link
+          const customerName =
+            notes.clientName ||
+            notes.customer_name ||
+            paymentLink?.customer?.name ||
+            payment.email?.split('@')[0] ||
+            'Valued Customer';
+
+          const customerEmail =
+            payment.email ||
+            paymentLink?.customer?.email ||
+            notes.clientEmail ||
+            '';
+
+          const customerPhone =
+            payment.contact ||
+            paymentLink?.customer?.contact ||
+            notes.clientPhone ||
+            '';
+
+          const serviceDescription =
+            paymentLink?.description ||
+            notes.serviceDescription ||
+            `Payment received via Razorpay Payment Link (${payment.id})`;
+
+          const serviceTitle =
+            notes.serviceTitle ||
+            paymentLink?.description ||
+            'IT Professional Services';
+
           await PaymentController.createInvoiceFromPayment({
-            orderId: payment.order_id || '',
+            orderId: payment.order_id || paymentLink?.id || '',
             paymentId: payment.id,
-            paymentMethod: payment.method ? `Razorpay (${payment.method.toUpperCase()})` : 'Razorpay',
+            paymentMethod: payment.method ? `Razorpay (${payment.method.toUpperCase()})` : 'Razorpay Payment Link',
             amountPaid,
             customerData: {
-              clientName: notes.clientName || payment.email || 'Customer',
-              clientCompany: notes.clientCompany || '',
-              clientEmail: payment.email || notes.clientEmail || '',
-              clientPhone: payment.contact || notes.clientPhone || '',
-              clientAddress: notes.clientAddress || '',
-              clientCity: notes.clientCity || '',
-              clientPincode: notes.clientPincode || '',
-              clientGstin: notes.clientGstin || ''
+              clientName: customerName,
+              clientCompany: notes.clientCompany || notes.company || '',
+              clientEmail: customerEmail,
+              clientPhone: customerPhone,
+              clientAddress: notes.clientAddress || notes.address || '',
+              clientCity: notes.clientCity || notes.city || '',
+              clientPincode: notes.clientPincode || notes.pincode || '',
+              clientGstin: notes.clientGstin || notes.gstin || ''
             },
             serviceData: {
-              serviceTitle: notes.serviceTitle || 'IT Professional Services',
-              serviceDescription: notes.serviceDescription || `Payment captured via Razorpay (${payment.id})`,
+              serviceTitle: serviceTitle,
+              serviceDescription: serviceDescription,
               sacCode: notes.sacCode || '998314'
             },
             billType: notes.billType || 'gst'
