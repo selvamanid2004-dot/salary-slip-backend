@@ -239,7 +239,7 @@ const seedInvoices = [
     grand_total: 60000.00,
     grand_total_in_words: 'Sixty Thousand Rupees Only',
     currency_symbol: '₹',
-    notes: 'Non-GST Service Bill. Net payable within 15 days.',
+    notes: 'Non-GST Service Bill.',
     terms: '1. Please transfer directly to the provided bank account or UPI ID.\n2. Quote invoice number in remarks.',
     converted_from_id: null,
     created_at: '2026-11-05T09:00:00.000Z'

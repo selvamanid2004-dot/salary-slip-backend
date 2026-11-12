@@ -1,7 +1,8 @@
 /**
  * @file invoiceHtmlGenerator.js
  * @description Generates clean, modern, print-ready HTML for IT Company Invoices and Quotations.
- * Optimized for A4 printing and PDF generation with clear visual hierarchy.
+ * Optimized for A4 printing and PDF generation with Times New Roman typography,
+ * properly scaled logo, single currency symbols, and without Terms and Conditions.
  */
 
 const { formatCurrency } = require('../utils/currencyFormatter');
@@ -58,7 +59,7 @@ function generateInvoiceHtml(invoice, company) {
   }
 
   // Fallbacks for Company info
-  const compName = invoice.company_name || company?.company_name || 'IT Services Provider';
+  const compName = invoice.company_name || company?.company_name || 'Apex Global Technologies Ltd.';
   const compTagline = company?.tagline || '';
   const compAddress = invoice.company_address || company?.address || [
     company?.address_line1,
@@ -83,6 +84,11 @@ function generateInvoiceHtml(invoice, company) {
 
   const hasBankDetails = Boolean(bankName || bankAccount || bankIfsc || bankUpi);
 
+  // Filter unwanted sentence from notes if present
+  const cleanedNotes = (invoice.notes || '')
+    .replace(/Thank you for your business\.\s*Net payable within 15 days\./gi, '')
+    .trim();
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -91,27 +97,28 @@ function generateInvoiceHtml(invoice, company) {
   <title>${escapeHtml(docTitle)} - ${escapeHtml(invoice.doc_number)}</title>
   <style>
     @page {
-      size: A4;
-      margin: 12mm 15mm 15mm 15mm;
+      size: A4 portrait;
+      margin: 10mm 12mm 12mm 12mm;
     }
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      font-family: "Times New Roman", Times, serif;
     }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: "Times New Roman", Times, serif;
       font-size: 13px;
-      line-height: 1.5;
-      color: #1e293b;
+      line-height: 1.45;
+      color: #111827;
       background: #ffffff;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
     .invoice-container {
-      max-width: 820px;
+      width: 800px;
       margin: 0 auto;
-      padding: 24px 32px;
+      padding: 30px 36px;
       background: #ffffff;
     }
 
@@ -119,32 +126,36 @@ function generateInvoiceHtml(invoice, company) {
     .header-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
     .header-table td {
       vertical-align: top;
     }
     .company-logo {
-      max-height: 70px;
-      max-width: 220px;
+      max-height: 120px;
+      max-width: 280px;
+      width: auto;
+      height: auto;
       object-fit: contain;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
+      display: block;
     }
     .company-name {
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 800;
-      color: #0f172a;
-      letter-spacing: -0.02em;
+      color: #111827;
+      letter-spacing: 0.01em;
+      line-height: 1.2;
     }
     .company-tagline {
-      font-size: 11px;
-      color: #64748b;
-      font-weight: 500;
-      margin-top: 1px;
+      font-size: 13px;
+      color: #4b5563;
+      font-style: italic;
+      margin-top: 2px;
     }
     .company-info {
-      font-size: 12px;
-      color: #475569;
+      font-size: 13px;
+      color: #374151;
       margin-top: 6px;
       line-height: 1.45;
     }
@@ -153,96 +164,98 @@ function generateInvoiceHtml(invoice, company) {
     }
     .doc-badge {
       display: inline-block;
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 800;
-      letter-spacing: 0.05em;
-      color: ${isGst ? '#1e40af' : '#047857'};
-      padding-bottom: 4px;
+      letter-spacing: 0.04em;
+      color: ${isGst ? '#1e3a8a' : '#065f46'};
       text-transform: uppercase;
     }
     .doc-type-sub {
       display: inline-block;
       background: ${isGst ? '#eff6ff' : '#ecfdf5'};
-      color: ${isGst ? '#1d4ed8' : '#065f46'};
+      color: ${isGst ? '#1e40af' : '#047857'};
       border: 1px solid ${isGst ? '#bfdbfe' : '#a7f3d0'};
-      padding: 3px 8px;
-      border-radius: 4px;
+      padding: 2px 8px;
+      border-radius: 3px;
       font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
       margin-top: 4px;
     }
     .doc-meta-table {
-      margin-top: 10px;
+      margin-top: 12px;
       margin-left: auto;
       border-collapse: collapse;
-      font-size: 12px;
+      font-size: 13px;
     }
     .doc-meta-table td {
       padding: 2px 6px;
     }
     .doc-meta-label {
-      color: #64748b;
+      color: #4b5563;
       font-weight: 600;
       text-align: right;
     }
     .doc-meta-val {
-      color: #0f172a;
+      color: #111827;
       font-weight: 700;
       text-align: right;
     }
 
     .divider {
       height: 2px;
-      background: #e2e8f0;
-      margin: 16px 0 20px 0;
+      background: #e5e7eb;
+      margin: 14px 0 18px 0;
     }
 
     /* Client and Billing Information */
     .bill-to-grid {
       width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 24px;
+      border-collapse: separate;
+      border-spacing: 14px 0;
+      margin-bottom: 20px;
+      margin-left: -14px;
+      margin-right: -14px;
     }
     .bill-to-box {
       width: 58%;
       vertical-align: top;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
       padding: 14px 16px;
     }
     .bank-quick-box {
-      width: 38%;
+      width: 42%;
       vertical-align: top;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
       padding: 14px 16px;
     }
     .section-label {
-      font-size: 10.5px;
+      font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: #64748b;
+      color: #4b5563;
       margin-bottom: 6px;
     }
     .client-title {
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 700;
-      color: #0f172a;
+      color: #111827;
     }
     .client-company {
-      font-size: 13px;
+      font-size: 13.5px;
       font-weight: 600;
-      color: #334155;
+      color: #374151;
       margin-top: 2px;
     }
     .client-detail-text {
-      font-size: 12px;
-      color: #475569;
-      margin-top: 4px;
+      font-size: 13px;
+      color: #4b5563;
+      margin-top: 5px;
       line-height: 1.45;
     }
 
@@ -253,13 +266,13 @@ function generateInvoiceHtml(invoice, company) {
       margin-bottom: 20px;
     }
     .items-table th {
-      background: #0f172a;
+      background: #111827;
       color: #ffffff;
-      font-size: 11.5px;
+      font-size: 12px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 9px 12px;
+      letter-spacing: 0.04em;
+      padding: 9px 10px;
       text-align: left;
     }
     .items-table th.text-right,
@@ -271,177 +284,167 @@ function generateInvoiceHtml(invoice, company) {
       text-align: center;
     }
     .items-table td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #e2e8f0;
+      padding: 10px 10px;
+      border-bottom: 1px solid #e5e7eb;
       vertical-align: top;
-      font-size: 12.5px;
+      font-size: 13px;
     }
     .items-table tr:nth-child(even) td {
-      background-color: #fafbfd;
+      background-color: #f9fafb;
     }
     .service-name {
       font-weight: 700;
-      color: #0f172a;
-      font-size: 13px;
+      color: #111827;
+      font-size: 13.5px;
     }
     .service-desc {
-      font-size: 11.5px;
-      color: #64748b;
+      font-size: 12px;
+      color: #4b5563;
       margin-top: 3px;
       white-space: pre-line;
     }
     .sac-badge {
       display: inline-block;
-      font-size: 10px;
-      font-weight: 600;
-      background: #f1f5f9;
-      color: #475569;
-      padding: 1px 5px;
+      font-size: 11px;
+      fontWeight: 600;
+      background: #f3f4f6;
+      color: #374151;
+      padding: 1px 6px;
       border-radius: 3px;
-      margin-top: 4px;
     }
 
     /* Financials & Calculation section */
     .bottom-section {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      margin-top: 14px;
     }
     .bottom-section td {
       vertical-align: top;
     }
     .bank-and-words {
-      width: 58%;
-      padding-right: 18px;
+      width: 56%;
+      padding-right: 16px;
     }
     .totals-box {
-      width: 42%;
+      width: 44%;
     }
     .totals-table {
       width: 100%;
       border-collapse: collapse;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
       overflow: hidden;
     }
     .totals-table td {
       padding: 7px 14px;
-      font-size: 12.5px;
+      font-size: 13px;
     }
     .totals-label {
-      color: #64748b;
+      color: #4b5563;
       font-weight: 600;
     }
     .totals-val {
       text-align: right;
       font-weight: 700;
-      color: #0f172a;
+      color: #111827;
     }
     .grand-total-row td {
-      background: #0f172a;
+      background: #111827;
       color: #ffffff;
-      padding: 10px 14px;
-      font-size: 14px;
+      padding: 11px 14px;
+      font-size: 15px;
       font-weight: 800;
     }
     .grand-total-row .totals-val {
       color: #ffffff;
-      font-size: 16px;
+      font-size: 17px;
     }
 
     /* Words Box */
     .words-box {
-      background: #f1f5f9;
-      border-left: 4px solid #3b82f6;
+      background: #f3f4f6;
+      border-left: 4px solid #1e3a8a;
       padding: 10px 14px;
-      border-radius: 0 6px 6px 0;
+      border-radius: 0 4px 4px 0;
       margin-bottom: 14px;
     }
     .words-title {
-      font-size: 10.5px;
+      font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: #475569;
+      color: #4b5563;
     }
     .words-text {
-      font-size: 12.5px;
+      font-size: 13.5px;
       font-weight: 700;
-      color: #0f172a;
-      margin-top: 2px;
+      color: #111827;
+      margin-top: 3px;
     }
 
     /* Bank Account Block */
     .bank-card {
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
       padding: 12px 14px;
-      background: #f8fafc;
+      background: #f9fafb;
       margin-bottom: 14px;
     }
     .bank-title {
-      font-size: 11px;
+      font-size: 11.5px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      color: #1e40af;
-      margin-bottom: 6px;
+      color: #1e3a8a;
+      margin-bottom: 8px;
     }
-    .bank-grid {
-      display: grid;
-      grid-template-columns: 110px 1fr;
-      row-gap: 3px;
-      font-size: 11.5px;
+    .bank-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+    .bank-table td {
+      padding: 2px 0;
     }
     .bank-lbl {
-      color: #64748b;
+      width: 110px;
+      color: #4b5563;
       font-weight: 600;
     }
     .bank-v {
-      color: #0f172a;
+      color: #111827;
       font-weight: 700;
     }
 
-    /* Footer & Terms */
+    /* Footer: Authorized Signatory only (Terms removed) */
     .footer-section {
-      margin-top: 26px;
-      border-top: 1px solid #e2e8f0;
-      padding-top: 14px;
+      margin-top: 36px;
+      padding-top: 20px;
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: flex-end;
-    }
-    .terms-box {
-      font-size: 11px;
-      color: #64748b;
-      max-width: 60%;
-      line-height: 1.45;
-    }
-    .terms-title {
-      font-weight: 700;
-      color: #334155;
-      text-transform: uppercase;
-      margin-bottom: 3px;
     }
     .sign-box {
       text-align: right;
-      min-width: 180px;
+      min-width: 220px;
     }
     .sign-line {
-      width: 160px;
-      border-top: 1px solid #94a3b8;
+      width: 180px;
+      border-top: 1px solid #4b5563;
       margin-left: auto;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
     .sign-title {
-      font-size: 11px;
+      font-size: 13.5px;
       font-weight: 700;
-      color: #0f172a;
+      color: #111827;
     }
     .sign-subtitle {
-      font-size: 10px;
-      color: #64748b;
+      font-size: 12px;
+      color: #4b5563;
+      margin-top: 2px;
     }
 
     @media print {
@@ -450,6 +453,7 @@ function generateInvoiceHtml(invoice, company) {
       }
       .invoice-container {
         padding: 0;
+        width: 100%;
         max-width: 100%;
       }
       .no-print {
@@ -463,7 +467,7 @@ function generateInvoiceHtml(invoice, company) {
     <!-- Header -->
     <table class="header-table">
       <tr>
-        <td style="width: 55%;">
+        <td style="width: 56%; padding-right: 16px;">
           ${compLogo ? `<img src="${compLogo}" alt="Company Logo" class="company-logo" />` : ''}
           <div class="company-name">${escapeHtml(compName)}</div>
           ${compTagline ? `<div class="company-tagline">${escapeHtml(compTagline)}</div>` : ''}
@@ -475,7 +479,7 @@ function generateInvoiceHtml(invoice, company) {
             ${compPan ? `<div><strong>PAN:</strong> ${escapeHtml(compPan)}</div>` : ''}
           </div>
         </td>
-        <td style="width: 45%;">
+        <td style="width: 44%;">
           <div class="doc-title-block">
             <div class="doc-badge">${escapeHtml(docTitle)}</div>
             <div>
@@ -524,14 +528,13 @@ function generateInvoiceHtml(invoice, company) {
             ${isGst && invoice.client_gstin ? `<div><strong>Client GSTIN:</strong> ${escapeHtml(invoice.client_gstin)}</div>` : ''}
           </div>
         </td>
-        <td style="width: 4%;"></td>
         <td class="bank-quick-box">
           <div class="section-label">IT Services Billing</div>
-          <div style="font-size: 12px; color: #475569; line-height: 1.5;">
+          <div style="font-size: 13px; color: #374151; line-height: 1.55;">
             <div><strong>Billing Type:</strong> ${isGst ? 'GST Invoice' : 'Non-GST Service Bill'}</div>
             <div><strong>Currency:</strong> ${escapeHtml(currencySymbol)} INR</div>
             ${isGst ? `<div><strong>SAC Code:</strong> 9983 (IT Services)</div>` : ''}
-            ${invoice.notes ? `<div style="margin-top: 6px; font-style: italic;">${escapeHtml(invoice.notes)}</div>` : ''}
+            ${cleanedNotes ? `<div style="margin-top: 8px; font-style: italic; color: #4b5563; border-top: 1px dashed #d1d5db; padding-top: 6px;">"${escapeHtml(cleanedNotes)}"</div>` : ''}
           </div>
         </td>
       </tr>
@@ -541,26 +544,26 @@ function generateInvoiceHtml(invoice, company) {
     <table class="items-table">
       <thead>
         <tr>
-          <th style="width: 5%;" class="text-center">#</th>
-          <th style="width: 50%;">Service Description</th>
+          <th style="width: 6%;" class="text-center">#</th>
+          <th style="width: ${isGst ? '48%' : '58%'};">Service Description</th>
           ${isGst ? `<th style="width: 12%;" class="text-center">SAC Code</th>` : ''}
           <th style="width: 10%;" class="text-center">Qty</th>
-          <th style="width: 13%;" class="text-right">Charge</th>
-          <th style="width: 15%;" class="text-right">Total</th>
+          <th style="width: 12%;" class="text-right">Charge</th>
+          <th style="width: 14%;" class="text-right">Total</th>
         </tr>
       </thead>
       <tbody>
         ${items.map((item, idx) => `
           <tr>
-            <td class="text-center" style="color: #64748b;">${idx + 1}</td>
+            <td class="text-center" style="color: #4b5563;">${idx + 1}</td>
             <td>
               <div class="service-name">${escapeHtml(item.service_title)}</div>
               ${item.description ? `<div class="service-desc">${escapeHtml(item.description)}</div>` : ''}
             </td>
             ${isGst ? `<td class="text-center"><span class="sac-badge">${escapeHtml(item.sac_code || '998314')}</span></td>` : ''}
             <td class="text-center">${item.qty || 1}</td>
-            <td class="text-right">${currencySymbol}${formatCurrency(item.rate || 0)}</td>
-            <td class="text-right" style="font-weight: 700; color: #0f172a;">${currencySymbol}${formatCurrency(item.amount || 0)}</td>
+            <td class="text-right">${formatCurrency(item.rate || 0, currencySymbol)}</td>
+            <td class="text-right" style="font-weight: 700; color: #111827;">${formatCurrency(item.amount || 0, currencySymbol)}</td>
           </tr>
         `).join('')}
       </tbody>
@@ -580,14 +583,16 @@ function generateInvoiceHtml(invoice, company) {
           ${hasBankDetails ? `
           <div class="bank-card">
             <div class="bank-title">Company Bank Account Details</div>
-            <div class="bank-grid">
-              ${bankName ? `<div class="bank-lbl">Bank Name:</div><div class="bank-v">${escapeHtml(bankName)}</div>` : ''}
-              ${bankHolder ? `<div class="bank-lbl">Account Name:</div><div class="bank-v">${escapeHtml(bankHolder)}</div>` : ''}
-              ${bankAccount ? `<div class="bank-lbl">Account No:</div><div class="bank-v">${escapeHtml(bankAccount)}</div>` : ''}
-              ${bankIfsc ? `<div class="bank-lbl">IFSC Code:</div><div class="bank-v">${escapeHtml(bankIfsc)}</div>` : ''}
-              ${bankBranch ? `<div class="bank-lbl">Branch:</div><div class="bank-v">${escapeHtml(bankBranch)}</div>` : ''}
-              ${bankUpi ? `<div class="bank-lbl">UPI ID:</div><div class="bank-v">${escapeHtml(bankUpi)}</div>` : ''}
-            </div>
+            <table class="bank-table">
+              <tbody>
+                ${bankName ? `<tr><td class="bank-lbl">Bank Name:</td><td class="bank-v">${escapeHtml(bankName)}</td></tr>` : ''}
+                ${bankHolder ? `<tr><td class="bank-lbl">Account Name:</td><td class="bank-v">${escapeHtml(bankHolder)}</td></tr>` : ''}
+                ${bankAccount ? `<tr><td class="bank-lbl">Account No:</td><td class="bank-v">${escapeHtml(bankAccount)}</td></tr>` : ''}
+                ${bankIfsc ? `<tr><td class="bank-lbl">IFSC Code:</td><td class="bank-v">${escapeHtml(bankIfsc)}</td></tr>` : ''}
+                ${bankBranch ? `<tr><td class="bank-lbl">Branch:</td><td class="bank-v">${escapeHtml(bankBranch)}</td></tr>` : ''}
+                ${bankUpi ? `<tr><td class="bank-lbl">UPI ID:</td><td class="bank-v">${escapeHtml(bankUpi)}</td></tr>` : ''}
+              </tbody>
+            </table>
           </div>
           ` : ''}
         </td>
@@ -596,41 +601,41 @@ function generateInvoiceHtml(invoice, company) {
           <table class="totals-table">
             <tr>
               <td class="totals-label">Subtotal:</td>
-              <td class="totals-val">${currencySymbol}${formatCurrency(invoice.subtotal || 0)}</td>
+              <td class="totals-val">${formatCurrency(invoice.subtotal || 0, currencySymbol)}</td>
             </tr>
             ${parseFloat(invoice.discount_amount) > 0 ? `
             <tr>
               <td class="totals-label">Discount ${invoice.discount_rate > 0 ? `(${invoice.discount_rate}%)` : ''}:</td>
-              <td class="totals-val" style="color: #ef4444;">-${currencySymbol}${formatCurrency(invoice.discount_amount)}</td>
+              <td class="totals-val" style="color: #dc2626;">-${formatCurrency(invoice.discount_amount, currencySymbol)}</td>
             </tr>
             <tr>
               <td class="totals-label">Taxable Amount:</td>
-              <td class="totals-val">${currencySymbol}${formatCurrency((invoice.subtotal || 0) - (invoice.discount_amount || 0))}</td>
+              <td class="totals-val">${formatCurrency((invoice.subtotal || 0) - (invoice.discount_amount || 0), currencySymbol)}</td>
             </tr>` : ''}
 
             ${isGst ? `
               ${invoice.tax_type === 'igst' ? `
                 <tr>
                   <td class="totals-label">IGST (${invoice.gst_rate || 18}%):</td>
-                  <td class="totals-val">${currencySymbol}${formatCurrency(invoice.igst_amount || invoice.total_tax || 0)}</td>
+                  <td class="totals-val">${formatCurrency(invoice.igst_amount || invoice.total_tax || 0, currencySymbol)}</td>
                 </tr>
               ` : `
                 <tr>
                   <td class="totals-label">CGST (${(invoice.gst_rate || 18) / 2}%):</td>
-                  <td class="totals-val">${currencySymbol}${formatCurrency(invoice.cgst_amount || 0)}</td>
+                  <td class="totals-val">${formatCurrency(invoice.cgst_amount || 0, currencySymbol)}</td>
                 </tr>
                 <tr>
                   <td class="totals-label">SGST (${(invoice.gst_rate || 18) / 2}%):</td>
-                  <td class="totals-val">${currencySymbol}${formatCurrency(invoice.sgst_amount || 0)}</td>
+                  <td class="totals-val">${formatCurrency(invoice.sgst_amount || 0, currencySymbol)}</td>
                 </tr>
               `}
               <tr>
-                <td class="totals-label">Total GST Tax:</td>
-                <td class="totals-val">${currencySymbol}${formatCurrency(invoice.total_tax || 0)}</td>
+                <td class="totals-label" style="color: #1e3a8a; font-weight: 700; border-top: 1px solid #e5e7eb;">Total GST:</td>
+                <td class="totals-val" style="color: #1e3a8a; border-top: 1px solid #e5e7eb;">${formatCurrency(invoice.total_tax || 0, currencySymbol)}</td>
               </tr>
             ` : `
               <tr>
-                <td class="totals-label" colspan="2" style="font-size: 11px; color: #059669; background: #ecfdf5; text-align: center;">
+                <td class="totals-label" colspan="2" style="font-size: 11.5px; color: #047857; background: #ecfdf5; text-align: center; font-weight: 700;">
                   ✓ Non-GST Bill (Zero Tax Applied)
                 </td>
               </tr>
@@ -638,19 +643,15 @@ function generateInvoiceHtml(invoice, company) {
 
             <tr class="grand-total-row">
               <td>Grand Total:</td>
-              <td class="totals-val">${currencySymbol}${formatCurrency(invoice.grand_total || 0)}</td>
+              <td class="totals-val">${formatCurrency(invoice.grand_total || 0, currencySymbol)}</td>
             </tr>
           </table>
         </td>
       </tr>
     </table>
 
-    <!-- Footer Terms & Signature -->
+    <!-- Footer: Authorized Signatory only -->
     <div class="footer-section">
-      <div class="terms-box">
-        <div class="terms-title">Terms &amp; Conditions:</div>
-        <div>${escapeHtml(invoice.terms || '1. Payments should be made to the designated bank account only.\n2. Please mention the invoice number in the payment description.\n3. This is a computer-generated document.')}</div>
-      </div>
       <div class="sign-box">
         <div class="sign-line"></div>
         <div class="sign-title">For ${escapeHtml(compName)}</div>
@@ -665,4 +666,3 @@ function generateInvoiceHtml(invoice, company) {
 module.exports = {
   generateInvoiceHtml
 };
-
