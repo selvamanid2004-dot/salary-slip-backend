@@ -21,7 +21,8 @@ const inMemoryStore = {
   company_profile: [],
   employees: [],
   payrolls: [],
-  admin_auth: []
+  admin_auth: [],
+  invoices: []
 };
 
 /**
@@ -167,6 +168,18 @@ function executeInMemoryQuery(sql, params) {
       }
       return list;
     }
+    if (normalizedSql.includes('from `invoices`') || normalizedSql.includes('from invoices')) {
+      let list = [...(inMemoryStore.invoices || [])];
+      if (normalizedSql.includes('where id = ?') || normalizedSql.includes('where `id` = ?')) {
+        const found = list.find(inv => Number(inv.id) === Number(params[0]));
+        return found ? [found] : [];
+      }
+      if (normalizedSql.includes('where doc_number = ?')) {
+        const found = list.find(inv => inv.doc_number === params[0]);
+        return found ? [found] : [];
+      }
+      return list;
+    }
     return [];
   }
 
@@ -189,6 +202,12 @@ function executeInMemoryQuery(sql, params) {
     if (normalizedSql.includes('admin_auth')) {
       const newId = (inMemoryStore.admin_auth && inMemoryStore.admin_auth.length > 0)
         ? Math.max(...inMemoryStore.admin_auth.map(a => a.id)) + 1
+        : 1;
+      return { insertId: newId, affectedRows: 1 };
+    }
+    if (normalizedSql.includes('invoices')) {
+      const newId = (inMemoryStore.invoices && inMemoryStore.invoices.length > 0)
+        ? Math.max(...inMemoryStore.invoices.map(i => i.id)) + 1
         : 1;
       return { insertId: newId, affectedRows: 1 };
     }
@@ -227,6 +246,11 @@ function executeInMemoryQuery(sql, params) {
     if (normalizedSql.includes('payrolls') && (normalizedSql.includes('where id = ?') || normalizedSql.includes('where `id` = ?'))) {
       const id = Number(params[0]);
       inMemoryStore.payrolls = inMemoryStore.payrolls.filter(p => p.id !== id);
+      return { affectedRows: 1 };
+    }
+    if (normalizedSql.includes('invoices') && (normalizedSql.includes('where id = ?') || normalizedSql.includes('where `id` = ?'))) {
+      const id = Number(params[0]);
+      inMemoryStore.invoices = (inMemoryStore.invoices || []).filter(i => i.id !== id);
       return { affectedRows: 1 };
     }
     return { affectedRows: 1 };

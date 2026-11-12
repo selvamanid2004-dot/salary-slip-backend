@@ -37,8 +37,214 @@ const seedCompany = {
   currency_code: 'INR',
   authorized_signatory_name: 'Vikram Malhotra',
   authorized_signatory_title: 'Head of People & Payroll',
-  logo_url: ''
+  logo_url: '',
+  bank_name: 'HDFC Bank Ltd.',
+  bank_account_no: '50200084920194',
+  bank_ifsc_code: 'HDFC0001234',
+  bank_branch: 'Cyber City DLF Phase 2, Gurugram',
+  bank_account_holder: 'Apex Global Technologies Ltd.',
+  bank_upi_id: 'apexglobal@okhdfcbank'
 };
+
+const seedInvoices = [
+  {
+    id: 1,
+    doc_type: 'invoice',
+    doc_number: 'INV-2026-0001',
+    bill_type: 'gst',
+    issue_date: '2026-10-15',
+    due_date: '2026-10-30',
+    status: 'paid',
+    client_name: 'Rajesh Mehta',
+    client_company: 'Nexus FinTech Solutions Pvt Ltd',
+    client_email: 'accounts@nexusfintech.io',
+    client_phone: '+91 98765 43210',
+    client_address: 'Plot 12, Whitefield EPIP Industrial Zone',
+    client_city: 'Bengaluru',
+    client_state: 'Karnataka',
+    client_pincode: '560066',
+    client_gstin: '29AABCN8291M1Z8',
+    company_name: 'Apex Global Technologies Ltd.',
+    company_address: 'Tower 4, Cyber City Phase 2, DLF Cyber Park, Sector 25, Gurugram, Haryana, 122002',
+    company_phone: '+91 124 458 9200',
+    company_email: 'payroll@apexglobal.tech',
+    company_gstin: '07AAAAA0000A1Z5',
+    company_pan: 'AAACA1234F',
+    company_logo: '',
+    bank_name: 'HDFC Bank Ltd.',
+    bank_account_no: '50200084920194',
+    bank_ifsc: 'HDFC0001234',
+    bank_branch: 'Cyber City DLF Phase 2, Gurugram',
+    bank_account_holder: 'Apex Global Technologies Ltd.',
+    bank_upi_id: 'apexglobal@okhdfcbank',
+    items: [
+      {
+        id: 1,
+        service_title: 'Website Development',
+        description: 'Custom React & Node.js Customer Portal with Payment Gateway and Analytics Dashboard',
+        sac_code: '998314',
+        qty: 1,
+        unit: 'Project',
+        rate: 120000.00,
+        amount: 120000.00
+      },
+      {
+        id: 2,
+        service_title: 'UI/UX Design & Prototyping',
+        description: 'Figma interactive prototypes, design system, responsive mobile & desktop wireframes',
+        sac_code: '998314',
+        qty: 1,
+        unit: 'Project',
+        rate: 45000.00,
+        amount: 45000.00
+      }
+    ],
+    subtotal: 165000.00,
+    discount_rate: 0.00,
+    discount_amount: 0.00,
+    tax_type: 'igst',
+    gst_rate: 18.00,
+    cgst_amount: 0.00,
+    sgst_amount: 0.00,
+    igst_amount: 29700.00,
+    total_tax: 29700.00,
+    grand_total: 194700.00,
+    grand_total_in_words: 'One Lakh Ninety-Four Thousand Seven Hundred Rupees Only',
+    currency_symbol: '₹',
+    notes: 'Thank you for partnering with Apex Global Technologies. Invoice is marked as paid.',
+    terms: '1. All payments are non-refundable after milestone acceptance.\n2. Standard SLA support applies for 90 days.',
+    converted_from_id: null,
+    created_at: '2026-10-15T10:00:00.000Z'
+  },
+  {
+    id: 2,
+    doc_type: 'quotation',
+    doc_number: 'QT-2026-0001',
+    bill_type: 'non_gst',
+    issue_date: '2026-11-01',
+    due_date: '2026-11-30',
+    status: 'sent',
+    client_name: 'Anita Sharma',
+    client_company: 'Zenith Healthtech Startup',
+    client_email: 'anita@zenithhealth.app',
+    client_phone: '+91 98123 45678',
+    client_address: '7th Floor, Innovation Hub, Outer Ring Road',
+    client_city: 'Hyderabad',
+    client_state: 'Telangana',
+    client_pincode: '500081',
+    client_gstin: '',
+    company_name: 'Apex Global Technologies Ltd.',
+    company_address: 'Tower 4, Cyber City Phase 2, DLF Cyber Park, Sector 25, Gurugram, Haryana, 122002',
+    company_phone: '+91 124 458 9200',
+    company_email: 'payroll@apexglobal.tech',
+    company_gstin: '',
+    company_pan: 'AAACA1234F',
+    company_logo: '',
+    bank_name: 'HDFC Bank Ltd.',
+    bank_account_no: '50200084920194',
+    bank_ifsc: 'HDFC0001234',
+    bank_branch: 'Cyber City DLF Phase 2, Gurugram',
+    bank_account_holder: 'Apex Global Technologies Ltd.',
+    bank_upi_id: 'apexglobal@okhdfcbank',
+    items: [
+      {
+        id: 1,
+        service_title: 'Mobile App Development',
+        description: 'Cross-platform React Native iOS & Android Patient Booking & Teleconsultation App',
+        sac_code: '',
+        qty: 1,
+        unit: 'Project',
+        rate: 180000.00,
+        amount: 180000.00
+      },
+      {
+        id: 2,
+        service_title: 'Search Engine Optimization (SEO)',
+        description: 'Comprehensive technical SEO audit, Core Web Vitals optimization, and keyword targeting',
+        sac_code: '',
+        qty: 1,
+        unit: 'Package',
+        rate: 35000.00,
+        amount: 35000.00
+      }
+    ],
+    subtotal: 215000.00,
+    discount_rate: 0.00,
+    discount_amount: 15000.00,
+    tax_type: 'none',
+    gst_rate: 0.00,
+    cgst_amount: 0.00,
+    sgst_amount: 0.00,
+    igst_amount: 0.00,
+    total_tax: 0.00,
+    grand_total: 200000.00,
+    grand_total_in_words: 'Two Lakh Rupees Only',
+    currency_symbol: '₹',
+    notes: 'Quotation valid for 30 calendar days from the date of issue. Special inaugural discount applied.',
+    terms: '1. 40% advance upon contract signing, 40% upon beta release, 20% on final store deployment.\n2. Includes 3 revision cycles for design and QA.',
+    converted_from_id: null,
+    created_at: '2026-11-01T11:30:00.000Z'
+  },
+  {
+    id: 3,
+    doc_type: 'invoice',
+    doc_number: 'INV-2026-0002',
+    bill_type: 'non_gst',
+    issue_date: '2026-11-05',
+    due_date: '2026-11-20',
+    status: 'unpaid',
+    client_name: 'Dr. Sandeep Patel',
+    client_company: 'CarePlus Diagnostic Clinic',
+    client_email: 'billing@careplusclinic.com',
+    client_phone: '+91 99887 76655',
+    client_address: 'Shop 14, Commercial Complex, Sector 15',
+    client_city: 'Gurugram',
+    client_state: 'Haryana',
+    client_pincode: '122001',
+    client_gstin: '',
+    company_name: 'Apex Global Technologies Ltd.',
+    company_address: 'Tower 4, Cyber City Phase 2, DLF Cyber Park, Sector 25, Gurugram, Haryana, 122002',
+    company_phone: '+91 124 458 9200',
+    company_email: 'payroll@apexglobal.tech',
+    company_gstin: '',
+    company_pan: 'AAACA1234F',
+    company_logo: '',
+    bank_name: 'HDFC Bank Ltd.',
+    bank_account_no: '50200084920194',
+    bank_ifsc: 'HDFC0001234',
+    bank_branch: 'Cyber City DLF Phase 2, Gurugram',
+    bank_account_holder: 'Apex Global Technologies Ltd.',
+    bank_upi_id: 'apexglobal@okhdfcbank',
+    items: [
+      {
+        id: 1,
+        service_title: 'Custom Software Development',
+        description: 'Cloud Clinic Appointment Scheduling and Patient Electronic Medical Records (EMR) system',
+        sac_code: '',
+        qty: 1,
+        unit: 'Project',
+        rate: 60000.00,
+        amount: 60000.00
+      }
+    ],
+    subtotal: 60000.00,
+    discount_rate: 0.00,
+    discount_amount: 0.00,
+    tax_type: 'none',
+    gst_rate: 0.00,
+    cgst_amount: 0.00,
+    sgst_amount: 0.00,
+    igst_amount: 0.00,
+    total_tax: 0.00,
+    grand_total: 60000.00,
+    grand_total_in_words: 'Sixty Thousand Rupees Only',
+    currency_symbol: '₹',
+    notes: 'Non-GST Service Bill. Net payable within 15 days.',
+    terms: '1. Please transfer directly to the provided bank account or UPI ID.\n2. Quote invoice number in remarks.',
+    converted_from_id: null,
+    created_at: '2026-11-05T09:00:00.000Z'
+  }
+];
 
 const seedEmployees = [
   {
@@ -47,6 +253,9 @@ const seedEmployees = [
     employee_name: 'Aarav Sharma',
     first_name: 'Aarav',
     last_name: 'Sharma',
+    email: 'aarav.sharma@apexglobal.tech',
+    phone: '+91 98765 01001',
+    department: 'Engineering',
     date_of_joining: '2021-03-01',
     role: 'Lead Software Architect',
     designation: 'Lead Software Architect',
@@ -60,6 +269,9 @@ const seedEmployees = [
     employee_name: 'Priya Nair',
     first_name: 'Priya',
     last_name: 'Nair',
+    email: 'priya.nair@apexglobal.tech',
+    phone: '+91 98765 01002',
+    department: 'Product Design',
     date_of_joining: '2022-06-15',
     role: 'Senior Product Designer',
     designation: 'Senior Product Designer',
@@ -73,6 +285,9 @@ const seedEmployees = [
     employee_name: 'Rohan Verma',
     first_name: 'Rohan',
     last_name: 'Verma',
+    email: 'rohan.verma@apexglobal.tech',
+    phone: '+91 98765 01003',
+    department: 'Human Resources',
     date_of_joining: '2020-01-10',
     role: 'Talent Acquisition Manager',
     designation: 'Talent Acquisition Manager',
@@ -86,6 +301,9 @@ const seedEmployees = [
     employee_name: 'Ananya Deshmukh',
     first_name: 'Ananya',
     last_name: 'Deshmukh',
+    email: 'ananya.deshmukh@apexglobal.tech',
+    phone: '+91 98765 01004',
+    department: 'Finance',
     date_of_joining: '2023-04-01',
     role: 'Financial Analyst',
     designation: 'Financial Analyst',
@@ -99,6 +317,9 @@ const seedEmployees = [
     employee_name: 'Karthik Subramanian',
     first_name: 'Karthik',
     last_name: 'Subramanian',
+    email: 'karthik.subramanian@apexglobal.tech',
+    phone: '+91 98765 01005',
+    department: 'Sales & Business',
     date_of_joining: '2022-10-01',
     role: 'Enterprise Sales Manager',
     designation: 'Enterprise Sales Manager',
@@ -187,9 +408,10 @@ async function initializeDatabase() {
   inMemoryStore.employees = JSON.parse(JSON.stringify(seedEmployees));
   inMemoryStore.payrolls = JSON.parse(JSON.stringify(seedPayrolls));
   inMemoryStore.admin_auth = [JSON.parse(JSON.stringify(seedAdmin))];
+  inMemoryStore.invoices = JSON.parse(JSON.stringify(seedInvoices));
 
   if (!isConnected) {
-    logger.info('[Init] Seeded in-memory store with default Company, 5 Employees, sample Payroll, and Admin user.');
+    logger.info('[Init] Seeded in-memory store with default Company, Employees, Payroll, Invoices/Quotes, and Admin user.');
     return;
   }
 
@@ -241,11 +463,11 @@ async function initializeDatabase() {
             conveyance_allowance, medical_allowance, special_allowance, pf_employee, pf_employer, professional_tax
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
-            emp.id, emp.employee_code, emp.first_name, emp.last_name, emp.email, emp.phone,
-            emp.date_of_birth, emp.gender, emp.designation, emp.department, emp.date_of_joining,
-            emp.employment_type, emp.status, emp.pan_number, emp.pf_uan, emp.bank_name,
-            emp.bank_account_no, emp.bank_ifsc_code, emp.basic_salary, emp.hra, emp.conveyance_allowance,
-            emp.medical_allowance, emp.special_allowance, emp.pf_employee, emp.pf_employer, emp.professional_tax
+            emp.id, emp.employee_code, emp.first_name, emp.last_name, emp.email, emp.phone || '',
+            emp.date_of_birth || null, emp.gender || 'Male', emp.designation, emp.department, emp.date_of_joining,
+            emp.employment_type || 'Full-Time', emp.status || 'Active', emp.pan_number || '', emp.pf_uan || '', emp.bank_name || '',
+            emp.bank_account_no || '', emp.bank_ifsc_code || '', emp.basic_salary || 0, emp.hra || 0, emp.conveyance_allowance || 0,
+            emp.medical_allowance || 0, emp.special_allowance || 0, emp.pf_employee || 0, emp.pf_employer || 0, emp.professional_tax || 0
           ]
         );
       }
@@ -286,6 +508,61 @@ async function initializeDatabase() {
       logger.info('[MySQL] Seeded default Admin user (admin / admin123).');
     }
 
+    // Ensure bank columns exist on company_profile
+    try {
+      const cols = await query('SHOW COLUMNS FROM `company_profile` LIKE "bank_name"');
+      if (!cols || cols.length === 0) {
+        await query(`ALTER TABLE \`company_profile\`
+          ADD COLUMN \`bank_name\` VARCHAR(100) DEFAULT '',
+          ADD COLUMN \`bank_account_no\` VARCHAR(50) DEFAULT '',
+          ADD COLUMN \`bank_ifsc_code\` VARCHAR(50) DEFAULT '',
+          ADD COLUMN \`bank_branch\` VARCHAR(100) DEFAULT '',
+          ADD COLUMN \`bank_account_holder\` VARCHAR(150) DEFAULT '',
+          ADD COLUMN \`bank_upi_id\` VARCHAR(100) DEFAULT ''
+        `);
+        logger.info('[MySQL] Added bank account columns to company_profile table.');
+        
+        // Update company profile with default seed bank details
+        await query(`UPDATE \`company_profile\` SET
+          bank_name = ?, bank_account_no = ?, bank_ifsc_code = ?, bank_branch = ?,
+          bank_account_holder = ?, bank_upi_id = ?
+          WHERE id = 1`,
+          [seedCompany.bank_name, seedCompany.bank_account_no, seedCompany.bank_ifsc_code,
+           seedCompany.bank_branch, seedCompany.bank_account_holder, seedCompany.bank_upi_id]
+        );
+      }
+    } catch (colErr) {
+      logger.warn(`[MySQL] Note on company_profile columns check: ${colErr.message}`);
+    }
+
+    // Check if invoices table has records
+    const invoices = await query('SELECT id FROM \`invoices\` LIMIT 1');
+    if (!invoices || invoices.length === 0) {
+      for (const inv of seedInvoices) {
+        await query(
+          `INSERT INTO \`invoices\` (
+            id, doc_type, doc_number, bill_type, issue_date, due_date, status,
+            client_name, client_company, client_email, client_phone, client_address, client_city, client_state, client_pincode, client_gstin,
+            company_name, company_address, company_phone, company_email, company_gstin, company_pan, company_logo,
+            bank_name, bank_account_no, bank_ifsc, bank_branch, bank_account_holder, bank_upi_id,
+            items, subtotal, discount_rate, discount_amount, tax_type, gst_rate,
+            cgst_amount, sgst_amount, igst_amount, total_tax, grand_total, grand_total_in_words,
+            currency_symbol, notes, terms, converted_from_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            inv.id, inv.doc_type, inv.doc_number, inv.bill_type, inv.issue_date, inv.due_date, inv.status,
+            inv.client_name, inv.client_company, inv.client_email, inv.client_phone, inv.client_address, inv.client_city, inv.client_state, inv.client_pincode, inv.client_gstin,
+            inv.company_name, inv.company_address, inv.company_phone, inv.company_email, inv.company_gstin, inv.company_pan, inv.company_logo,
+            inv.bank_name, inv.bank_account_no, inv.bank_ifsc, inv.bank_branch, inv.bank_account_holder, inv.bank_upi_id,
+            JSON.stringify(inv.items), inv.subtotal, inv.discount_rate, inv.discount_amount, inv.tax_type, inv.gst_rate,
+            inv.cgst_amount, inv.sgst_amount, inv.igst_amount, inv.total_tax, inv.grand_total, inv.grand_total_in_words,
+            inv.currency_symbol, inv.notes, inv.terms, inv.converted_from_id
+          ]
+        );
+      }
+      logger.info(`[MySQL] Seeded ${seedInvoices.length} sample IT Invoices and Quotations.`);
+    }
+
   } catch (err) {
     logger.error(`[MySQL] Initialization error: ${err.message}`, { stack: err.stack });
   }
@@ -303,5 +580,6 @@ module.exports = {
   seedCompany,
   seedEmployees,
   seedPayrolls,
-  seedAdmin
+  seedAdmin,
+  seedInvoices
 };

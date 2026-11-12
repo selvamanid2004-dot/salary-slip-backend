@@ -34,8 +34,9 @@ class CompanyModel {
         INSERT INTO \`company_profile\` (
           company_name, tagline, address_line1, address_line2, city, state, postal_code,
           country, email, phone, website, pan_number, gst_number, currency_symbol, currency_code,
-          authorized_signatory_name, authorized_signatory_title, logo_url
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          authorized_signatory_name, authorized_signatory_title, logo_url,
+          bank_name, bank_account_no, bank_ifsc_code, bank_branch, bank_account_holder, bank_upi_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
       const result = await query(insertSql, [
         data.company_name, data.tagline || '', data.address_line1, data.address_line2 || '',
@@ -44,7 +45,9 @@ class CompanyModel {
         data.currency_symbol || '₹', data.currency_code || 'INR',
         data.authorized_signatory_name || 'HR Manager',
         data.authorized_signatory_title || 'Authorized Signatory',
-        data.logo_url || ''
+        data.logo_url || '',
+        data.bank_name || '', data.bank_account_no || '', data.bank_ifsc_code || '',
+        data.bank_branch || '', data.bank_account_holder || '', data.bank_upi_id || ''
       ]);
       return this.get();
     }
@@ -55,7 +58,9 @@ class CompanyModel {
         city = ?, state = ?, postal_code = ?, country = ?, email = ?,
         phone = ?, website = ?, pan_number = ?, gst_number = ?,
         currency_symbol = ?, currency_code = ?, authorized_signatory_name = ?,
-        authorized_signatory_title = ?, logo_url = ?
+        authorized_signatory_title = ?, logo_url = ?,
+        bank_name = ?, bank_account_no = ?, bank_ifsc_code = ?, bank_branch = ?,
+        bank_account_holder = ?, bank_upi_id = ?
       WHERE id = ?
     `;
 
@@ -78,6 +83,12 @@ class CompanyModel {
       data.authorized_signatory_name !== undefined ? data.authorized_signatory_name : existing.authorized_signatory_name,
       data.authorized_signatory_title !== undefined ? data.authorized_signatory_title : existing.authorized_signatory_title,
       data.logo_url !== undefined ? data.logo_url : existing.logo_url,
+      data.bank_name !== undefined ? data.bank_name : (existing.bank_name || ''),
+      data.bank_account_no !== undefined ? data.bank_account_no : (existing.bank_account_no || ''),
+      data.bank_ifsc_code !== undefined ? data.bank_ifsc_code : (existing.bank_ifsc_code || ''),
+      data.bank_branch !== undefined ? data.bank_branch : (existing.bank_branch || ''),
+      data.bank_account_holder !== undefined ? data.bank_account_holder : (existing.bank_account_holder || ''),
+      data.bank_upi_id !== undefined ? data.bank_upi_id : (existing.bank_upi_id || ''),
       existing.id
     ]);
 

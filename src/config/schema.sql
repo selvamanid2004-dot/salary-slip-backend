@@ -24,6 +24,12 @@ CREATE TABLE IF NOT EXISTS `company_profile` (
   `authorized_signatory_name` VARCHAR(150) DEFAULT 'HR Manager',
   `authorized_signatory_title` VARCHAR(150) DEFAULT 'Authorized Signatory',
   `logo_url` LONGTEXT DEFAULT NULL,
+  `bank_name` VARCHAR(100) DEFAULT '',
+  `bank_account_no` VARCHAR(50) DEFAULT '',
+  `bank_ifsc_code` VARCHAR(50) DEFAULT '',
+  `bank_branch` VARCHAR(100) DEFAULT '',
+  `bank_account_holder` VARCHAR(150) DEFAULT '',
+  `bank_upi_id` VARCHAR(100) DEFAULT '',
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -122,4 +128,71 @@ CREATE TABLE IF NOT EXISTS `admin_auth` (
   `name` VARCHAR(150) DEFAULT 'Administrator',
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX `idx_admin_username` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 5. IT Services Quotations & Invoices Table
+CREATE TABLE IF NOT EXISTS `invoices` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `doc_type` ENUM('quotation', 'invoice') NOT NULL DEFAULT 'invoice',
+  `doc_number` VARCHAR(50) NOT NULL UNIQUE,
+  `bill_type` ENUM('gst', 'non_gst') NOT NULL DEFAULT 'gst',
+  `issue_date` DATE NOT NULL,
+  `due_date` DATE DEFAULT NULL,
+  `status` ENUM('draft', 'sent', 'accepted', 'declined', 'paid', 'unpaid', 'cancelled') NOT NULL DEFAULT 'draft',
+  
+  -- Customer Details
+  `client_name` VARCHAR(150) NOT NULL,
+  `client_company` VARCHAR(255) DEFAULT '',
+  `client_email` VARCHAR(150) DEFAULT '',
+  `client_phone` VARCHAR(50) NOT NULL,
+  `client_address` TEXT DEFAULT NULL,
+  `client_city` VARCHAR(100) DEFAULT '',
+  `client_state` VARCHAR(100) DEFAULT '',
+  `client_pincode` VARCHAR(20) DEFAULT '',
+  `client_gstin` VARCHAR(50) DEFAULT '',
+
+  -- Company Details Snapshot
+  `company_name` VARCHAR(255) DEFAULT '',
+  `company_address` TEXT DEFAULT NULL,
+  `company_phone` VARCHAR(50) DEFAULT '',
+  `company_email` VARCHAR(150) DEFAULT '',
+  `company_gstin` VARCHAR(50) DEFAULT '',
+  `company_pan` VARCHAR(50) DEFAULT '',
+  `company_logo` LONGTEXT DEFAULT NULL,
+  
+  -- Company Bank Details Snapshot
+  `bank_name` VARCHAR(100) DEFAULT '',
+  `bank_account_no` VARCHAR(50) DEFAULT '',
+  `bank_ifsc` VARCHAR(50) DEFAULT '',
+  `bank_branch` VARCHAR(100) DEFAULT '',
+  `bank_account_holder` VARCHAR(150) DEFAULT '',
+  `bank_upi_id` VARCHAR(100) DEFAULT '',
+
+  -- IT Service Line Items (JSON encoded)
+  `items` LONGTEXT NOT NULL,
+  
+  -- Financials & Taxes
+  `subtotal` DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+  `discount_rate` DECIMAL(5, 2) NOT NULL DEFAULT 0.00,
+  `discount_amount` DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+  `tax_type` ENUM('none', 'cgst_sgst', 'igst') NOT NULL DEFAULT 'cgst_sgst',
+  `gst_rate` DECIMAL(5, 2) NOT NULL DEFAULT 18.00,
+  `cgst_amount` DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+  `sgst_amount` DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+  `igst_amount` DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+  `total_tax` DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+  `grand_total` DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+  `grand_total_in_words` TEXT DEFAULT NULL,
+  
+  -- Metadata & Notes
+  `currency_symbol` VARCHAR(10) DEFAULT '₹',
+  `notes` TEXT DEFAULT NULL,
+  `terms` TEXT DEFAULT NULL,
+  `converted_from_id` INT DEFAULT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_doc_type` (`doc_type`),
+  INDEX `idx_bill_type` (`bill_type`),
+  INDEX `idx_status` (`status`),
+  INDEX `idx_client_name` (`client_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
