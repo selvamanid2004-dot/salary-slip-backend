@@ -196,3 +196,10 @@ CREATE TABLE IF NOT EXISTS `invoices` (
   INDEX `idx_status` (`status`),
   INDEX `idx_client_name` (`client_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 6. System Metadata Table (Tracks installation, initial seeding flags, and migrations)
+CREATE TABLE IF NOT EXISTS `system_meta` (
+  `meta_key` VARCHAR(100) NOT NULL PRIMARY KEY,
+  `meta_value` VARCHAR(255) NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -12,6 +12,7 @@ const path = require('path');
 
 // Load environment configuration
 dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const logger = require('./utils/logger');
 const requestLogger = require('./middleware/requestLogger');

@@ -11,7 +11,10 @@ const mysql = require('mysql2/promise');
 const dotenv = require('dotenv');
 const logger = require('../utils/logger');
 
+const path = require('path');
+
 dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 let pool = null;
 let isConnectedToMySQL = false;

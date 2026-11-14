@@ -408,7 +408,7 @@ async function initializeDatabase() {
   inMemoryStore.employees = JSON.parse(JSON.stringify(seedEmployees));
   inMemoryStore.payrolls = JSON.parse(JSON.stringify(seedPayrolls));
   inMemoryStore.admin_auth = [JSON.parse(JSON.stringify(seedAdmin))];
-  inMemoryStore.invoices = JSON.parse(JSON.stringify(seedInvoices));
+  inMemoryStore.invoices = [];
 
   if (!isConnected) {
     logger.info('[Init] Seeded in-memory store with default Company, Employees, Payroll, Invoices/Quotes, and Admin user.');
@@ -431,6 +431,31 @@ async function initializeDatabase() {
     }
     logger.info('[MySQL] Schema verification and tables creation completed.');
 
+    // Ensure system_meta table exists
+    await query(`CREATE TABLE IF NOT EXISTS \`system_meta\` (
+      \`meta_key\` VARCHAR(100) NOT NULL PRIMARY KEY,
+      \`meta_value\` VARCHAR(255) NOT NULL,
+      \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`);
+
+    // Helper functions for metadata flags
+    const isMetaSet = async (key) => {
+      try {
+        const rows = await query('SELECT meta_value FROM `system_meta` WHERE meta_key = ? LIMIT 1', [key]);
+        return rows && rows.length > 0;
+      } catch {
+        return false;
+      }
+    };
+
+    const setMeta = async (key, val = 'true') => {
+      try {
+        await query('INSERT INTO `system_meta` (meta_key, meta_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE meta_value = ?', [key, val, val]);
+      } catch (e) {
+        logger.debug(`[Init] setMeta error: ${e.message}`);
+      }
+    };
+
     // Check if company_profile has records
     const companies = await query('SELECT id FROM `company_profile` LIMIT 1');
     if (!companies || companies.length === 0) {
@@ -451,51 +476,59 @@ async function initializeDatabase() {
       logger.info('[MySQL] Seeded default Company Profile.');
     }
 
-    // Check if employees table has records
-    const employees = await query('SELECT id FROM `employees` LIMIT 1');
-    if (!employees || employees.length === 0) {
-      for (const emp of seedEmployees) {
-        await query(
-          `INSERT INTO \`employees\` (
-            id, employee_code, first_name, last_name, email, phone, date_of_birth, gender,
-            designation, department, date_of_joining, employment_type, status, pan_number,
-            pf_uan, bank_name, bank_account_no, bank_ifsc_code, basic_salary, hra,
-            conveyance_allowance, medical_allowance, special_allowance, pf_employee, pf_employer, professional_tax
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            emp.id, emp.employee_code, emp.first_name, emp.last_name, emp.email, emp.phone || '',
-            emp.date_of_birth || null, emp.gender || 'Male', emp.designation, emp.department, emp.date_of_joining,
-            emp.employment_type || 'Full-Time', emp.status || 'Active', emp.pan_number || '', emp.pf_uan || '', emp.bank_name || '',
-            emp.bank_account_no || '', emp.bank_ifsc_code || '', emp.basic_salary || 0, emp.hra || 0, emp.conveyance_allowance || 0,
-            emp.medical_allowance || 0, emp.special_allowance || 0, emp.pf_employee || 0, emp.pf_employer || 0, emp.professional_tax || 0
-          ]
-        );
+    // Check if employees table has records and has not been seeded before
+    const employeesSeeded = await isMetaSet('demo_employees_seeded');
+    if (!employeesSeeded) {
+      const employees = await query('SELECT id FROM `employees` LIMIT 1');
+      if (!employees || employees.length === 0) {
+        for (const emp of seedEmployees) {
+          await query(
+            `INSERT INTO \`employees\` (
+              id, employee_code, first_name, last_name, email, phone, date_of_birth, gender,
+              designation, department, date_of_joining, employment_type, status, pan_number,
+              pf_uan, bank_name, bank_account_no, bank_ifsc_code, basic_salary, hra,
+              conveyance_allowance, medical_allowance, special_allowance, pf_employee, pf_employer, professional_tax
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              emp.id, emp.employee_code, emp.first_name, emp.last_name, emp.email, emp.phone || '',
+              emp.date_of_birth || null, emp.gender || 'Male', emp.designation, emp.department, emp.date_of_joining,
+              emp.employment_type || 'Full-Time', emp.status || 'Active', emp.pan_number || '', emp.pf_uan || '', emp.bank_name || '',
+              emp.bank_account_no || '', emp.bank_ifsc_code || '', emp.basic_salary || 0, emp.hra || 0, emp.conveyance_allowance || 0,
+              emp.medical_allowance || 0, emp.special_allowance || 0, emp.pf_employee || 0, emp.pf_employer || 0, emp.professional_tax || 0
+            ]
+          );
+        }
+        logger.info(`[MySQL] Seeded ${seedEmployees.length} initial Employee records.`);
       }
-      logger.info(`[MySQL] Seeded ${seedEmployees.length} initial Employee records.`);
+      await setMeta('demo_employees_seeded', 'true');
     }
 
-    // Check if payrolls table has records
-    const payrolls = await query('SELECT id FROM `payrolls` LIMIT 1');
-    if (!payrolls || payrolls.length === 0) {
-      const p = seedPayrolls[0];
-      await query(
-        `INSERT INTO \`payrolls\` (
-          id, slip_number, employee_id, month, year, payment_date, total_working_days, days_worked,
-          paid_leaves, unpaid_leaves, basic_pay, hra_pay, conveyance_pay, medical_pay,
-          special_allowance_pay, bonus, overtime_pay, gross_earnings, pf_deduction,
-          professional_tax_deduction, tds_tax_deduction, esi_deduction, other_deductions,
-          total_deductions, net_salary, net_salary_in_words, payment_status, payment_method, remarks
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          p.id, p.slip_number, p.employee_id, p.month, p.year, p.payment_date, p.total_working_days,
-          p.days_worked, p.paid_leaves, p.unpaid_leaves, p.basic_pay, p.hra_pay, p.conveyance_pay,
-          p.medical_pay, p.special_allowance_pay, p.bonus, p.overtime_pay, p.gross_earnings,
-          p.pf_deduction, p.professional_tax_deduction, p.tds_tax_deduction, p.esi_deduction,
-          p.other_deductions, p.total_deductions, p.net_salary, p.net_salary_in_words,
-          p.payment_status, p.payment_method, p.remarks
-        ]
-      );
-      logger.info('[MySQL] Seeded sample Payroll slip.');
+    // Check if payrolls table has records and has not been seeded before
+    const payrollsSeeded = await isMetaSet('demo_payrolls_seeded');
+    if (!payrollsSeeded) {
+      const payrolls = await query('SELECT id FROM `payrolls` LIMIT 1');
+      if (!payrolls || payrolls.length === 0) {
+        const p = seedPayrolls[0];
+        await query(
+          `INSERT INTO \`payrolls\` (
+            id, slip_number, employee_id, month, year, payment_date, total_working_days, days_worked,
+            paid_leaves, unpaid_leaves, basic_pay, hra_pay, conveyance_pay, medical_pay,
+            special_allowance_pay, bonus, overtime_pay, gross_earnings, pf_deduction,
+            professional_tax_deduction, tds_tax_deduction, esi_deduction, other_deductions,
+            total_deductions, net_salary, net_salary_in_words, payment_status, payment_method, remarks
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            p.id, p.slip_number, p.employee_id, p.month, p.year, p.payment_date, p.total_working_days,
+            p.days_worked, p.paid_leaves, p.unpaid_leaves, p.basic_pay, p.hra_pay, p.conveyance_pay,
+            p.medical_pay, p.special_allowance_pay, p.bonus, p.overtime_pay, p.gross_earnings,
+            p.pf_deduction, p.professional_tax_deduction, p.tds_tax_deduction, p.esi_deduction,
+            p.other_deductions, p.total_deductions, p.net_salary, p.net_salary_in_words,
+            p.payment_status, p.payment_method, p.remarks
+          ]
+        );
+        logger.info('[MySQL] Seeded sample Payroll slip.');
+      }
+      await setMeta('demo_payrolls_seeded', 'true');
     }
 
     // Check if admin_auth table has records
@@ -535,32 +568,36 @@ async function initializeDatabase() {
       logger.warn(`[MySQL] Note on company_profile columns check: ${colErr.message}`);
     }
 
-    // Check if invoices table has records
-    const invoices = await query('SELECT id FROM \`invoices\` LIMIT 1');
-    if (!invoices || invoices.length === 0) {
-      for (const inv of seedInvoices) {
-        await query(
-          `INSERT INTO \`invoices\` (
-            id, doc_type, doc_number, bill_type, issue_date, due_date, status,
-            client_name, client_company, client_email, client_phone, client_address, client_city, client_state, client_pincode, client_gstin,
-            company_name, company_address, company_phone, company_email, company_gstin, company_pan, company_logo,
-            bank_name, bank_account_no, bank_ifsc, bank_branch, bank_account_holder, bank_upi_id,
-            items, subtotal, discount_rate, discount_amount, tax_type, gst_rate,
-            cgst_amount, sgst_amount, igst_amount, total_tax, grand_total, grand_total_in_words,
-            currency_symbol, notes, terms, converted_from_id
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            inv.id, inv.doc_type, inv.doc_number, inv.bill_type, inv.issue_date, inv.due_date, inv.status,
-            inv.client_name, inv.client_company, inv.client_email, inv.client_phone, inv.client_address, inv.client_city, inv.client_state, inv.client_pincode, inv.client_gstin,
-            inv.company_name, inv.company_address, inv.company_phone, inv.company_email, inv.company_gstin, inv.company_pan, inv.company_logo,
-            inv.bank_name, inv.bank_account_no, inv.bank_ifsc, inv.bank_branch, inv.bank_account_holder, inv.bank_upi_id,
-            JSON.stringify(inv.items), inv.subtotal, inv.discount_rate, inv.discount_amount, inv.tax_type, inv.gst_rate,
-            inv.cgst_amount, inv.sgst_amount, inv.igst_amount, inv.total_tax, inv.grand_total, inv.grand_total_in_words,
-            inv.currency_symbol, inv.notes, inv.terms, inv.converted_from_id
-          ]
-        );
+    // Check if invoices table has already been seeded before
+    const invoicesSeeded = await isMetaSet('demo_invoices_seeded');
+    if (!invoicesSeeded) {
+      const invoices = await query('SELECT id FROM `invoices` LIMIT 1');
+      if (!invoices || invoices.length === 0) {
+        for (const inv of seedInvoices) {
+          await query(
+            `INSERT INTO \`invoices\` (
+              id, doc_type, doc_number, bill_type, issue_date, due_date, status,
+              client_name, client_company, client_email, client_phone, client_address, client_city, client_state, client_pincode, client_gstin,
+              company_name, company_address, company_phone, company_email, company_gstin, company_pan, company_logo,
+              bank_name, bank_account_no, bank_ifsc, bank_branch, bank_account_holder, bank_upi_id,
+              items, subtotal, discount_rate, discount_amount, tax_type, gst_rate,
+              cgst_amount, sgst_amount, igst_amount, total_tax, grand_total, grand_total_in_words,
+              currency_symbol, notes, terms, converted_from_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              inv.id, inv.doc_type, inv.doc_number, inv.bill_type, inv.issue_date, inv.due_date, inv.status,
+              inv.client_name, inv.client_company, inv.client_email, inv.client_phone, inv.client_address, inv.client_city, inv.client_state, inv.client_pincode, inv.client_gstin,
+              inv.company_name, inv.company_address, inv.company_phone, inv.company_email, inv.company_gstin, inv.company_pan, inv.company_logo,
+              inv.bank_name, inv.bank_account_no, inv.bank_ifsc, inv.bank_branch, inv.bank_account_holder, inv.bank_upi_id,
+              JSON.stringify(inv.items), inv.subtotal, inv.discount_rate, inv.discount_amount, inv.tax_type, inv.gst_rate,
+              inv.cgst_amount, inv.sgst_amount, inv.igst_amount, inv.total_tax, inv.grand_total, inv.grand_total_in_words,
+              inv.currency_symbol, inv.notes, inv.terms, inv.converted_from_id
+            ]
+          );
+        }
+        logger.info(`[MySQL] Seeded ${seedInvoices.length} sample IT Invoices and Quotations.`);
       }
-      logger.info(`[MySQL] Seeded ${seedInvoices.length} sample IT Invoices and Quotations.`);
+      await setMeta('demo_invoices_seeded', 'true');
     }
 
   } catch (err) {
