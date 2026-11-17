@@ -32,8 +32,8 @@ const inMemoryStore = {
  * Creates and initializes the MySQL connection pool
  */
 async function initDatabasePool() {
-  const useSsl = process.env.DB_SSL === 'true' || 
-                 (process.env.DB_HOST && (process.env.DB_HOST.includes('tidbcloud.com') || process.env.DB_HOST.includes('aivencloud.com')));
+  const useSsl = process.env.DB_SSL === 'true' ||
+    (process.env.DB_HOST && (process.env.DB_HOST.includes('tidbcloud.com') || process.env.DB_HOST.includes('aivencloud.com')));
 
   const sslOption = useSsl ? { minVersion: 'TLSv1.2', rejectUnauthorized: true } : undefined;
 
@@ -51,30 +51,31 @@ async function initDatabasePool() {
   };
 
   try {
-    // Attempt connecting to MySQL server directly first (without database to check if database exists)
-    try {
-      const tempConnection = await mysql.createConnection({
-        host: dbConfig.host,
-        port: dbConfig.port,
-        user: dbConfig.user,
-        password: dbConfig.password,
-        ...(sslOption ? { ssl: sslOption } : {})
-      });
-
-      // Create database if it does not already exist
-      await tempConnection.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
-      await tempConnection.end();
-    } catch (dbCreateErr) {
-      // If user lacks permission to create db or db already exists, continue to pool connection
-      logger.debug(`[MySQL] Pre-connect database check: ${dbCreateErr.message}`);
-    }
-
-    // Now instantiate the main connection pool
+    // Instantiate the connection pool directly for fast startup
     pool = mysql.createPool(dbConfig);
-    
-    // Verify pool connection
-    const connection = await pool.getConnection();
-    connection.release();
+
+    // Fast pool verification
+    try {
+      const connection = await pool.getConnection();
+      connection.release();
+    } catch (connErr) {
+      // If database does not exist (ER_BAD_DB_ERROR), create it and retry
+      if (connErr.code === 'ER_BAD_DB_ERROR') {
+        const tempConnection = await mysql.createConnection({
+          host: dbConfig.host,
+          port: dbConfig.port,
+          user: dbConfig.user,
+          password: dbConfig.password,
+          ...(sslOption ? { ssl: sslOption } : {})
+        });
+        await tempConnection.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
+        await tempConnection.end();
+        const retryConn = await pool.getConnection();
+        retryConn.release();
+      } else {
+        throw connErr;
+      }
+    }
 
     isConnectedToMySQL = true;
     logger.info(`[MySQL] Successfully connected to MySQL database: ${dbConfig.database} on ${dbConfig.host}:${dbConfig.port}`);
@@ -224,8 +225,8 @@ function executeInMemoryQuery(sql, params) {
       const newHash = params[0];
       const target = (params[1] || '').toString().toLowerCase();
       if (inMemoryStore.admin_auth) {
-        const user = inMemoryStore.admin_auth.find(a => 
-          (a.username && a.username.toLowerCase() === target) || 
+        const user = inMemoryStore.admin_auth.find(a =>
+          (a.username && a.username.toLowerCase() === target) ||
           Number(a.id) === Number(target)
         );
         if (user) {

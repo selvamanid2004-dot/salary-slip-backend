@@ -1,24 +1,25 @@
 /**
  * @file authController.js
  * @description Authentication controller managing Administrator login, session verification,
- * and secure password updates with bcrypt hashing and JWT tokens.
+ * single-device restriction, logout session invalidation, and password updates.
  */
 
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { query } = require('../config/database');
+const sessionService = require('../services/sessionService');
 const logger = require('../utils/logger');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'workpulse_enterprise_secret_key_2026';
 
 /**
- * Admin Login
+ * Admin Login with Single-Device Restriction
  * POST /api/auth/login
- * Body: { username, password }
+ * Body: { username, password, deviceId, deviceName, forceLogout }
  */
 async function login(req, res, next) {
   try {
-    const { username, password } = req.body;
+    const { username, password, deviceId, deviceName, forceLogout } = req.body;
 
     if (!username || !password) {
       return res.status(400).json({
@@ -46,18 +47,46 @@ async function login(req, res, next) {
       });
     }
 
-    // Generate JWT token
+    // Determine client IP and Device ID
+    const ipAddress = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
+    const resolvedDeviceId = deviceId || ('dev_fallback_' + req.headers['user-agent']?.replace(/\W/g, '').substring(0, 32));
+    const resolvedDeviceName = deviceName || (req.headers['user-agent']?.includes('Windows') ? 'Windows PC' : 'Web Device');
+
+    // Attempt to create session enforcing single-device policy
+    const sessionResult = await sessionService.createSession({
+      username: admin.username,
+      deviceId: resolvedDeviceId,
+      deviceName: resolvedDeviceName,
+      ipAddress,
+      forceLogout: Boolean(forceLogout)
+    });
+
+    if (!sessionResult.success) {
+      // Device Conflict: Already logged in on another device
+      return res.status(409).json({
+        success: false,
+        code: sessionResult.conflict.code,
+        message: sessionResult.conflict.message,
+        activeDevice: sessionResult.conflict.activeDevice,
+        lastActive: sessionResult.conflict.lastActive,
+        canForceLogout: true
+      });
+    }
+
+    // Generate JWT token embedded with device and session IDs
     const token = jwt.sign(
       {
         id: admin.id,
         username: admin.username,
-        name: admin.name || 'Administrator'
+        name: admin.name || 'Administrator',
+        deviceId: sessionResult.session.deviceId,
+        sessionId: sessionResult.session.tokenId
       },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '1d' } // Session-based daily token
     );
 
-    logger.info(`[Auth] Admin user '${admin.username}' logged in successfully.`);
+    logger.info(`[Auth] Admin user '${admin.username}' logged in successfully on device '${resolvedDeviceName}'.`);
 
     return res.json({
       success: true,
@@ -67,6 +96,10 @@ async function login(req, res, next) {
         id: admin.id,
         username: admin.username,
         name: admin.name || 'Administrator'
+      },
+      session: {
+        deviceId: sessionResult.session.deviceId,
+        deviceName: sessionResult.session.deviceName
       }
     });
   } catch (err) {
@@ -76,7 +109,49 @@ async function login(req, res, next) {
 }
 
 /**
- * Verify JWT Token
+ * Admin Logout with Immediate Session Invalidation
+ * POST /api/auth/logout
+ * Body: { deviceId }
+ */
+async function logout(req, res, next) {
+  try {
+    let username = null;
+    let sessionId = null;
+
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, JWT_SECRET);
+        username = decoded?.username;
+        sessionId = decoded?.sessionId;
+      } catch (e) {
+        // Token might already be expired, proceed with deviceId
+      }
+    }
+
+    const { deviceId } = req.body;
+
+    if (username) {
+      await sessionService.invalidateSession(username, sessionId, 'User explicitly logged out');
+    } else if (deviceId) {
+      await sessionService.invalidateByDeviceId(deviceId);
+    }
+
+    logger.info(`[Auth] User '${username || 'Unknown'}' logged out and session was invalidated immediately.`);
+
+    return res.json({
+      success: true,
+      message: 'Signed out successfully. Device session has been invalidated.'
+    });
+  } catch (err) {
+    logger.error(`[Auth] Logout error: ${err.message}`, { stack: err.stack });
+    next(err);
+  }
+}
+
+/**
+ * Verify JWT Token and Active Device Session
  * GET /api/auth/verify
  */
 async function verifyToken(req, res) {
@@ -92,6 +167,21 @@ async function verifyToken(req, res) {
 
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, JWT_SECRET);
+
+    // Validate active session
+    if (decoded.sessionId) {
+      const clientDeviceId = req.headers['x-device-id'] || decoded.deviceId;
+      const isSessionValid = await sessionService.validateSession(decoded.username, decoded.sessionId, clientDeviceId);
+
+      if (!isSessionValid) {
+        return res.status(401).json({
+          success: false,
+          valid: false,
+          code: 'SESSION_TERMINATED',
+          message: 'Session has ended or account was logged in from another device.'
+        });
+      }
+    }
 
     // Verify user exists in database/store
     const rows = await query('SELECT id, username, name FROM `admin_auth` WHERE id = ? LIMIT 1', [decoded.id]);
@@ -215,6 +305,7 @@ async function changePassword(req, res, next) {
 
 module.exports = {
   login,
+  logout,
   verifyToken,
   changePassword
 };

@@ -1,6 +1,6 @@
 /**
  * @file authRoutes.js
- * @description Authentication and Password Management endpoints.
+ * @description Authentication, Session, and Password Management endpoints.
  */
 
 const express = require('express');
@@ -9,10 +9,13 @@ const authController = require('../controllers/authController');
 const { loginRateLimiter } = require('../middleware/rateLimiter');
 const { requireAuth } = require('../middleware/authMiddleware');
 
-// POST /api/auth/login (with brute-force rate limiting)
+// POST /api/auth/login (with brute-force rate limiting and single-device enforcement)
 router.post('/login', loginRateLimiter, authController.login);
 
-// GET /api/auth/verify
+// POST /api/auth/logout (immediate session invalidation)
+router.post('/logout', authController.logout);
+
+// GET /api/auth/verify (token and device session validity check)
 router.get('/verify', authController.verifyToken);
 
 // POST /api/auth/change-password (protected by JWT authentication)

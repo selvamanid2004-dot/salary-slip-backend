@@ -203,3 +203,20 @@ CREATE TABLE IF NOT EXISTS `system_meta` (
   `meta_value` VARCHAR(255) NOT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 7. Active User Sessions Table (Single-device session management and device tracking)
+CREATE TABLE IF NOT EXISTS `active_sessions` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT DEFAULT 1,
+  `username` VARCHAR(100) NOT NULL,
+  `device_id` VARCHAR(120) NOT NULL,
+  `device_name` VARCHAR(255) DEFAULT '',
+  `ip_address` VARCHAR(64) DEFAULT '',
+  `token_id` VARCHAR(120) NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `last_active` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `is_active` TINYINT(1) DEFAULT 1,
+  INDEX `idx_username_active` (`username`, `is_active`),
+  INDEX `idx_token` (`token_id`),
+  INDEX `idx_device` (`device_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -113,14 +113,15 @@ async function startServer() {
     logger.info('Starting Employee Management & Salary Slip Backend...');
     logger.info('====================================================');
 
-    // Run database connection and schema initialization
-    await initializeDatabase();
-
+    // Start HTTP listener immediately so frontend and healthcheck are available instantly
     serverInstance = app.listen(PORT, () => {
       logger.info(`[Server] API server running successfully on http://localhost:${PORT}`);
       logger.info(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
       logger.info(`[Server] Healthcheck available at: http://localhost:${PORT}/api/health`);
     });
+
+    // Run database connection, schema verification, and session setup
+    await initializeDatabase();
   } catch (error) {
     logger.error(`[Server] Fatal startup error: ${error.message}`, { stack: error.stack });
     process.exit(1);

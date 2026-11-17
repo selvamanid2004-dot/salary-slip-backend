@@ -415,21 +415,9 @@ async function initializeDatabase() {
     return;
   }
 
-  // If MySQL is connected, execute DDL schema file
+  // If MySQL is connected, execute DDL schema file or perform fast verification
   try {
-    const schemaSqlPath = path.join(__dirname, 'schema.sql');
-    const sqlContent = fs.readFileSync(schemaSqlPath, 'utf8');
-
-    // Split SQL queries on semicolons outside of quotes
-    const statements = sqlContent
-      .split(/;\s*$/m)
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-
-    for (const statement of statements) {
-      await query(statement);
-    }
-    logger.info('[MySQL] Schema verification and tables creation completed.');
+    const sessionService = require('../services/sessionService');
 
     // Ensure system_meta table exists
     await query(`CREATE TABLE IF NOT EXISTS \`system_meta\` (
@@ -455,6 +443,31 @@ async function initializeDatabase() {
         logger.debug(`[Init] setMeta error: ${e.message}`);
       }
     };
+
+    // Fast Startup Optimization:
+    // If schema was already initialized on a previous boot, skip slow DDL queries!
+    const isSchemaReady = await isMetaSet('schema_initialized');
+    if (isSchemaReady) {
+      await sessionService.ensureSessionTable();
+      logger.info('[MySQL] Schema already initialized. Instant startup completed.');
+      return;
+    }
+
+    const schemaSqlPath = path.join(__dirname, 'schema.sql');
+    const sqlContent = fs.readFileSync(schemaSqlPath, 'utf8');
+
+    // Split SQL queries on semicolons outside of quotes
+    const statements = sqlContent
+      .split(/;\s*$/m)
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+
+    for (const statement of statements) {
+      await query(statement);
+    }
+    logger.info('[MySQL] Schema verification and tables creation completed.');
+    await sessionService.ensureSessionTable();
+    await setMeta('schema_initialized', 'true');
 
     // Check if company_profile has records
     const companies = await query('SELECT id FROM `company_profile` LIMIT 1');
@@ -599,6 +612,8 @@ async function initializeDatabase() {
       }
       await setMeta('demo_invoices_seeded', 'true');
     }
+
+    await setMeta('schema_initialized', 'true');
 
   } catch (err) {
     logger.error(`[MySQL] Initialization error: ${err.message}`, { stack: err.stack });
