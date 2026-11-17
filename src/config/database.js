@@ -38,11 +38,11 @@ async function initDatabasePool() {
   const sslOption = useSsl ? { minVersion: 'TLSv1.2', rejectUnauthorized: true } : undefined;
 
   const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '3306', 10),
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'salary_slip_db',
+    host: process.env.DB_HOST || 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com',
+    port: parseInt(process.env.DB_PORT || '4000', 10),
+    user: process.env.DB_USER || '48xDrYBjphQHLQj.root',
+    password: process.env.DB_PASSWORD || 'SalarySlip_Secure_2026!Db',
+    database: process.env.DB_NAME || 'salary_slip',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,

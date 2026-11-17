@@ -132,6 +132,13 @@ async function startServer() {
       logger.info(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
       logger.info(`[Server] Healthcheck available at: http://localhost:${PORT}/api/health`);
     });
+    serverInstance.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        logger.info(`[Server] Port ${PORT} is already in use, reusing running backend instance.`);
+      } else {
+        logger.error(`[Server] Listener error: ${err.message}`);
+      }
+    });
 
     // Run database connection, schema verification, and session setup
     await initializeDatabase();
