@@ -34,19 +34,32 @@ const PORT = process.env.PORT || 5000;
 
 // Security and utility middleware
 app.use(helmet({
-  contentSecurityPolicy: false // Allow external fonts and iframe previews
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
 }));
 
-// CORS Configuration - Environment-configurable for production
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
-  : '*';
-
+// CORS Configuration - Permissive for all frontend clients, Render deployments, and local dev
 app.use(cors({
-  origin: allowedOrigins,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: (origin, callback) => {
+    // Allow all origins (browser frontend on Render, custom domains, localhost, mobile)
+    callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Device-Id',
+    'Accept',
+    'Origin',
+    'X-Requested-With',
+    'X-CSRF-Token'
+  ],
+  exposedHeaders: ['Authorization', 'X-Device-Id']
 }));
+
+// Explicit preflight handler for all routes
+app.options('*', cors());
 app.use(express.json({
   limit: '10mb',
   verify: (req, res, buf) => {
