@@ -59,7 +59,7 @@ app.use(cors({
 }));
 
 // Explicit preflight handler for all routes
-app.options('*', cors());
+app.options(/(.*)/, cors());
 app.use(express.json({
   limit: '10mb',
   verify: (req, res, buf) => {
